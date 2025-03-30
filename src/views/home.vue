@@ -41,8 +41,13 @@
 </template>
 
 <script>
+import DataService from '../services/dataService.js';
 export default {
   name: 'Home',
+  components: {
+    // Import Vuetify components here
+    DataService
+  },
   data() {
     return {
       selectedFile: null,
@@ -162,10 +167,28 @@ export default {
       } finally {
         this.uploading = false;
       }
-    },
+    }, getAdminAppDetails() {
+    DataService.getAdminAppDetails(this.selectedOrganization)
+      .then((response) => {
+       
+        DataService.getOranizationHiearachy(response[0].port)
+          .then((resp) => {
+            this.hierarchydata = resp[0];
+            this.updateDeptDropdown();
+          })
+          .catch((error) => {
+            console.error("Error fetching hierarchy data:", error);
+          });
+      })
+      .catch((error) => {
+        console.error("Error fetching hierarchy data:", error);
+      });
   },
+  },
+ 
   mounted() {
     this.selectedOrganization = 'DHS';
+    this.getAdminAppDetails();
     this.updateDeptDropdown();
     
   },
