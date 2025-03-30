@@ -145,6 +145,9 @@ export default {
       formData.append("file", this.selectedFile);
          // Create metadata object
          const metadata = {
+          documentType: this.selectedFile.type,
+          documentSize: this.selectedFile.size,
+          documentName: this.selectedFile.name,
         organization: this.selectedOrganization,
         department: this.selectedDept,
         application: this.selectedApp,
