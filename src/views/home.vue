@@ -1,221 +1,34 @@
 <template>
-  <v-container>
-    <div class="dropdown-container">
-    <div class="dropdown-item">
-      <label class="label" for="dept">Department:</label>
-      <select id="dept" v-model="selectedDept" @change="updateAppDropdown">
-        <option value="">Select Department</option>
-        <option v-for="dept in depts" :key="dept.label" :value="dept.label">{{ dept.label }}</option>
-      </select>
-    </div>
-    <div class="dropdown-item">
-      <label class="label" for="aplication">Application:</label>
-      <select style="text-align:start" id="aplication" v-model="selectedApp">
-        <option value="">Select Application</option>
-        <option v-for="app in apps" :key="app.label" :value="app.label">{{ app.label }}</option>
-      </select>
-    </div>
-  </div>
-    <v-file-input
-      label="Upload File"
-      v-model="selectedFile"
-      accept="image/*, .pdf,.txt"
-      show-size
-      @change="uploadFile"
-    ></v-file-input>
+  <v-card>
+    <v-tabs v-model="tab" bg-color="primary">
+      <v-tab value="upload" to="/upload">Upload</v-tab>
+      <v-tab value="download" to="/download">Download</v-tab>
+    </v-tabs>
 
-    <v-btn :disabled="!selectedFile" color="primary" @click="submitFile">
-      Upload
-    </v-btn>
-
-    <v-progress-linear
-      v-if="uploading"
-      indeterminate
-      color="blue"
-    ></v-progress-linear>
-
-    <v-alert v-if="uploadSuccess" type="success">
-      File uploaded successfully!
-    </v-alert>
-  </v-container>
+   
+      <!-- Render the routed component -->
+      <router-view></router-view>
+   
+  </v-card>
 </template>
 
 <script>
-import DataService from '../services/dataService.js';
 export default {
-  name: 'Home',
-  components: {
-    // Import Vuetify components here
-    DataService
-  },
+  name: "Home",
   data() {
     return {
-      selectedFile: null,
-      uploading: false,
-      uploadSuccess: false,
-      selectedOrganization: '',
-      selectedDept: '',
-      selectedApp: '',
-      organizations: [],
-      depts: [],
-      apps: [],
-      hierarchydata: {
-        "label": "DHS",
-        "children": [
-          {
-            "label": "FIA",
-            "children": [
-              {
-                "label": "ae",
-                "children": []
-              },
-              {
-                "label": "asdf",
-                "children": []
-              }
-            ]
-          },
-          {
-            "label": "DOE",
-            "children": [
-              {
-                "label": "xyz",
-                "children": []
-              },
-              {
-                "label": "ssd",
-                "children": []
-              },
-              {
-                "label": "kpg",
-                "children": []
-              }
-            ]
-          }
-        ]
-      }
+      tab: "upload", // Default tab
     };
   },
-  methods: {
-    populateDropdown(dropdown, options) {
-      this[dropdown] = options;
+  watch: {
+    // Sync the tab with the route
+    $route(to) {
+      this.tab = to.name; // Update the tab based on the route name
     },
-    updateDeptDropdown() {
-      const selectedOrganization = this.selectedOrganization;
-      let organization = this.hierarchydata.children.find(child => child.label === selectedOrganization);
-      if (!organization) {
-        organization = this.hierarchydata;
-      }
-      if (organization) {
-        this.populateDropdown('depts', organization.children);
-      } else {
-        this.depts = [];
-      }
-      this.apps = [];
-      this.selectedDept = '';
-      this.selectedApp = '';
-    },
-    updateAppDropdown() {
-      const selectedOrganization = this.selectedOrganization;
-      const selectedDept = this.selectedDept;
-      let organization = this.hierarchydata.children.find(child => child.label === selectedOrganization);
-      if (!organization) {
-        organization = this.hierarchydata;
-      }
-      if (organization) {
-        const dept = organization.children.find(child => child.label === selectedDept);
-        if (dept) {
-          this.populateDropdown('apps', dept.children);
-        } else {
-          this.apps = [];
-        }
-      } else {
-        this.apps = [];
-      }
-      this.selectedApp = '';
-    },
-    uploadFile() {
-      console.log(this.selectedFile.size);
-    },
-    async submitFile() {
-      if (!this.selectedFile) return;
-
-      this.uploading = true;
-      const formData = new FormData();
-      formData.append("file", this.selectedFile);
-         // Create metadata object
-         const metadata = {
-          documentType: this.selectedFile.type,
-          documentSize: this.selectedFile.size,
-          documentName: this.selectedFile.name,
-        organization: this.selectedOrganization,
-        department: this.selectedDept,
-        application: this.selectedApp,
-      };
-
-      // Append metadata as a JSON string
-      formData.append("metadata", JSON.stringify(metadata));
-
-      try {
-        const response = await fetch("http://localhost:8001", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (response.ok) {
-          this.uploadSuccess = true;
-        }
-      } catch (error) {
-        console.error("Upload failed:", error);
-      } finally {
-        this.uploading = false;
-      }
-    }, getAdminAppDetails() {
-    DataService.getAdminAppDetails(this.selectedOrganization)
-      .then((response) => {
-       
-        DataService.getOranizationHiearachy(response[0].port)
-          .then((resp) => {
-            this.hierarchydata = resp[0];
-            this.updateDeptDropdown();
-          })
-          .catch((error) => {
-            console.error("Error fetching hierarchy data:", error);
-          });
-      })
-      .catch((error) => {
-        console.error("Error fetching hierarchy data:", error);
-      });
   },
-  },
- 
   mounted() {
-    this.selectedOrganization = 'DHS';
-    this.getAdminAppDetails();
-    this.updateDeptDropdown();
-    
+    // Set the initial tab based on the current route
+    this.tab = this.$route.name || "upload";
   },
 };
 </script>
-<style scoped>
-.dropdown-container {
-  display: flex;
-  flex-direction: column;
-  gap: 10px; /* Adjust the gap between dropdowns as needed */
-}
-
-select {
- border-style: solid;
-  color: black;
-  min-width: 200px;
-  margin: 10px;
-}
-
-label {
-  min-width: 115px; /* Adjust the width of the label as needed */
-}
-
-.label{
-   text-align: justify;
-}
-</style>

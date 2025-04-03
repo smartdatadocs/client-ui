@@ -13,7 +13,7 @@
   
       <v-app-bar app>
         <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
-        <v-toolbar-title>Client UI</v-toolbar-title>
+        <v-toolbar-title>{{title}}</v-toolbar-title>
       </v-app-bar>
   
       <v-main>
@@ -31,6 +31,7 @@
     data() {
       return {
         drawer: false,
+        title: import.meta.env.VITE_ORGANIZATION,
       };
     },
   };
